@@ -24,7 +24,8 @@ jobs:
       run: |
         aws cloudformation create-stack \
           --stack-name my-event-bus-stack \
-          --template-body file://path/to/your/template.yaml \
+          --template-body file:///full/absolute/path/to/your/template.yaml # Replace with the actual path to your CloudFormation template
+          --parameters ParameterKey=EventBusName,ParameterValue=demo02 # Set the event bus name
           --capabilities CAPABILITY_NAMED_IAM
       env:
         AWS_DEFAULT_REGION: us-east-1 # Replace with your desired AWS region
