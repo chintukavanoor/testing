@@ -1,4 +1,4 @@
-name: Deploy Event Bus
+name: Create EventBridge Event Bus
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  create-event-bus:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +20,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1 # Replace with your desired AWS region
 
-      - name: Deploy Event Bus
+      - name: Create EventBridge Event Bus
         run: |
-          aws cloudformation create-stack \
-            --stack-name my-event-bus-stack \
-            --template-body file://.github/demotemplate.yaml # Specify the correct path
-            --parameters ParameterKey=EventBusName,ParameterValue=demo02 # Set the event bus name
-            --capabilities CAPABILITY_NAMED_IAM
-        env:
-          AWS_DEFAULT_REGION: us-east-1 # Replace with your desired AWS region
+          aws events create-event-bus --name demohello02 # Set the event bus name
