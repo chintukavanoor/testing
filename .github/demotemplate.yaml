@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create an Amazon EventBridge (CloudWatch Events) event bus
+
+Resources:
+  MyEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: Demo02 # Replace with your desired event bus name
+
+Outputs:
+  EventBusName:
+    Description: The name of the EventBridge event bus
+    Value: !Ref MyEventBus
