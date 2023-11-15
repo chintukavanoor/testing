@@ -93,7 +93,7 @@ Resources:
           def handler(event, context):
               print("Hello from Lambda!")
 
-  MyEventBridgeRule:
+  MyEventBridgeTarget:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: wb-eventrule-uk-useast-rightsline-events
