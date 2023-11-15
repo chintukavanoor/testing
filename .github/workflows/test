@@ -111,6 +111,7 @@ Resources:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: november15test
+      EventBusName: 'aws.partner/rightsline.com/prd-div191-v4'
       EventPattern:
         source:
           - 'aws.partner/rightsline.com/prd-div191-v4'
