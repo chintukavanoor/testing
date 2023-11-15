@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Add Lambda as Target to Existing EventBridge Rule'
+Description: 'Create EventBridge Rule and Add Lambda as Target'
 
 Resources:
   TestingIAMRole:
@@ -14,56 +14,70 @@ Resources:
               Service: 'lambda.amazonaws.com'
             Action: 'sts:AssumeRole'
       Policies:
-        - PolicyName: AmazonS3FullAccessPolicy
+        - PolicyName: AWSLambdaBasicExecutionRole
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action: 's3:*'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
                 Resource: '*'
-        - PolicyName: SESFullAccessPolicy
+        - PolicyName: AWSLambdaS3FullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action: 'ses:*'
-                Resource: '*'
-        - PolicyName: SQSFullAccessPolicy
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - '*'
+        - PolicyName: AWSLambdaSESFullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action: 'sqs:*'
+                Action:
+                  - 'ses:SendEmail'
+                  - 'ses:SendRawEmail'
                 Resource: '*'
-        - PolicyName: SSMReadOnlyAccessPolicy
+        - PolicyName: AWSLambdaSQSFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'sqs:SendMessage'
+                  - 'sqs:ReceiveMessage'
+                  - 'sqs:DeleteMessage'
+                Resource: '*'
+        - PolicyName: AWSLambdaSSMReadOnlyAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
                 Action: 'ssm:GetParameters'
                 Resource: '*'
-        - PolicyName: LambdaFullAccessPolicy
+        - PolicyName: AWSLambdaCloudWatchFullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action: 'lambda:*'
+                Action:
+                  - 'cloudwatch:*'
                 Resource: '*'
-        - PolicyName: CloudWatchFullAccessPolicy
+        - PolicyName: AWSLambdaCloudWatchLogsFullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action: 'cloudwatch:*'
+                Action:
+                  - 'logs:*'
                 Resource: '*'
-        - PolicyName: CloudWatchLogsFullAccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: 'Allow'
-                Action: 'logs:*'
-                Resource: '*'
-        - PolicyName: SecretManagerReadWritePolicy
+        - PolicyName: AWSLambdaSecretsManagerReadWrite
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -96,8 +110,11 @@ Resources:
   MyEventBridgeRule:
     Type: 'AWS::Events::Rule'
     Properties:
-      Name: wb-eventrule-uk-useast-rightsline-events
-      EventBusName: aws.partner/rightsline.com/prd-div191-v4
+      Name: november15test
+      EventPattern:
+        source:
+          - 'aws.partner/rightsline.com/prd-div191-v4'
+      State: 'ENABLED'
       Targets:
         - Arn: !GetAtt TestingLambdaFunction.Arn
           Id: TestingLambdaFunctionTarget
