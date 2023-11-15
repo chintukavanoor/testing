@@ -16,18 +16,6 @@ Resources:
       EventSourceName: !Ref EventSourceNameParam
       Name: !Ref EventBusNameParam
 
-  RightslineRule:
-    Type: 'AWS::Events::Rule'
-    Properties:
-      Name: 'wb-eventrule-uk-useast-rightsline-events' # Updated name
-      EventBusName: !Ref RightslineEventBus
-      EventPattern:
-        source:
-          - prefix: !Ref EventSourceNameParam
-      Targets:
-        - Arn: !GetAtt [RightslineLogGroup, Arn]
-          Id: RightslineTarget
-
   RightslineLogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
