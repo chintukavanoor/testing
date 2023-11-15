@@ -1,56 +1,134 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Parameters:
-  EventSourceNameParam:
-    Type: String
-    Default: 'aws.partner/rightsline.com/prd-div191-v4'
-    Description: aws.partner/rightsline.com/prd-div191-v4
-  EventBusNameParam:
-    Type: String
-    Default: 'aws.partner/rightsline.com/prd-div191-v4'
-    Description: aws.partner/rightsline.com/prd-div191-v4
+Description: 'Creating Rightsline BeBanjo Integration Lambda'
 
 Resources:
-  RightslineEventBus:
-    Type: 'AWS::Events::EventBus'
-    Properties:
-      EventSourceName: !Ref EventSourceNameParam
-      Name: !Ref EventBusNameParam
-
-  RightslineLogGroup:
-    Type: 'AWS::Logs::LogGroup'
-    Properties:
-      LogGroupName: !Sub '/aws/events/${RightslineEventBus}'
-
-  RightslineArchive:
-    Type: 'AWS::Events::Archive'
-    Properties:
-      ArchiveName: 'wb-rule-uk-useast-rightsline-archive'
-      SourceArn: !GetAtt [RightslineEventBus, Arn]
-      Description: 'Event archive for aws.partner/rightsline.com/prd-div191-v4'
-
-  RightslineEventBusRole:
+  RightslineLambdaIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: 'wb-iam-eventbus-uk-useast-rightsline-events'
+      RoleName: wb-iam-uk-useast-rightsline-bebanjo-integration
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
+          - Effect: 'Allow'
             Principal:
-              Service: 'events.amazonaws.com'
+              Service: 'lambda.amazonaws.com'
             Action: 'sts:AssumeRole'
       Policies:
-        - PolicyName: 'wb-iam-eventbus-uk-useast-rightsline-policy'
+        - PolicyName: AWSLambdaBasicExecutionRole
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
+              - Effect: 'Allow'
                 Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
+                Resource: '*'
+        - PolicyName: AWSLambdaS3FullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:ListBucket'
                 Resource:
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/events/${RightslineEventBus}:*'
-              - Effect: Allow
-                Action: 'events:PutEvents'
-                Resource: !GetAtt [RightslineEventBus, Arn]
+                  - '*'
+        - PolicyName: AWSLambdaSESFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'ses:SendEmail'
+                  - 'ses:SendRawEmail'
+                Resource: '*'
+        - PolicyName: AWSLambdaSQSFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'sqs:SendMessage'
+                  - 'sqs:ReceiveMessage'
+                  - 'sqs:DeleteMessage'
+                Resource: '*'
+        - PolicyName: AWSLambdaSSMReadOnlyAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'ssm:GetParameters'
+                Resource: '*'
+        - PolicyName: AWSLambdaCloudWatchFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'cloudwatch:*'
+                Resource: '*'
+        - PolicyName: AWSLambdaCloudWatchLogsFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:*'
+                Resource: '*'
+        - PolicyName: AWSLambdaSecretsManagerReadWrite
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:PutSecretValue'
+                  - 'secretsmanager:DeleteSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
+                Resource: '*'
+
+  RightslineLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt RightslineLambdaIAMRole.Arn
+      FunctionName: wb-lambda-uk-useast-rightsline-bebanjo-integration
+      Runtime: python3.7
+      Timeout: 900
+      MemorySize: 256
+      ReservedConcurrentExecutions: 4
+      Environment:
+        Variables:
+          email_1: kavanoor.aditya@wildbrain.com
+          email_2: jayagopal.venkata@wildbrain.com
+      Code:
+        ZipFile: |
+          # Your Python code goes here
+          def handler(event, context):
+              print("Hello from Rightsline_BeBanjo_Lambda!")
+
+  RightslineEventBridgeRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: wb-eventrule-uk-useast-rightsline-events
+      EventBusName: 'aws.partner/rightsline.com/prd-div191-v4'
+      EventPattern:
+        source:
+          - prefix: 'aws.partner/rightsline.com/prd-div191-v4'
+      State: 'ENABLED'
+      Targets:
+        - Arn: !GetAtt RightslineLambdaFunction.Arn
+          Id: RightslineLambdaFunctionTarget
+
+  RightslineLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: /aws/lambda/wb-lambda-uk-useast-rightsline-bebanjo-integration
+
+  RightslineLambdaCloudWatchLogGroup:
+    Type: 'AWS::Lambda::LogGroupPermission'
+    Properties:
+      LogGroupName: !Ref RightslineLogGroup
+      Principal: 'lambda.amazonaws.com'
