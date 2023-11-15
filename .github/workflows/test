@@ -75,11 +75,33 @@ Resources:
                   - 'secretsmanager:ListSecretVersionIds'
                 Resource: '*'
 
+  TestingLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt TestingIAMRole.Arn
+      FunctionName: testingnov_15
+      Runtime: python3.7
+      Timeout: 900
+      MemorySize: 128
+      Environment:
+        Variables:
+          email_1: kavanoor.aditya@wildbrain.com
+      Code:
+        ZipFile: |
+          # Your Python code goes here
+          def handler(event, context):
+              print("Hello from Lambda!")
+
   MyEventBridgeTarget:
+    Type: 'AWS::Events::RuleTarget'
+    Properties:
+      Rule: !Ref MyEventBridgeRule
+      Arn: !GetAtt TestingLambdaFunction.Arn
+      Id: TestingLambdaFunctionTarget
+
+MyEventBridgeRule:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: wb-eventrule-uk-useast-rightsline-events
       EventBusName: aws.partner/rightsline.com/prd-div191-v4
-      Targets:
-        - Arn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:testingnov_15'
-          Id: TestingLambdaFunctionTarget
