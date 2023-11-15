@@ -87,11 +87,11 @@ Resources:
       Environment:
         Variables:
           email_1: kavanoor.aditya@wildbrain.com
-      InlineCode: |
-        # Your Python code goes here
-        def handler(event, context):
-            print("Hello from Lambda!")
-      # Note: Replace the 'InlineCode' property with your actual Python code
+      Code:
+        ZipFile: |
+          # Your Python code goes here
+          def handler(event, context):
+              print("Hello from Lambda!")
 
   MyEventBridgeTarget:
     Type: 'AWS::Events::Rule'
