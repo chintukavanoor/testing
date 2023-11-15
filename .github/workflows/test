@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Add Lambda as Target to Existing EventBridge Rule'
+
+Resources:
+  TestingIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: testing_iam_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AmazonS3FullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 's3:*'
+                Resource: '*'
+        - PolicyName: SESFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'ses:*'
+                Resource: '*'
+        - PolicyName: SQSFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'sqs:*'
+                Resource: '*'
+        - PolicyName: SSMReadOnlyAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'ssm:GetParameters'
+                Resource: '*'
+        - PolicyName: LambdaFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'lambda:*'
+                Resource: '*'
+        - PolicyName: CloudWatchFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'cloudwatch:*'
+                Resource: '*'
+        - PolicyName: CloudWatchLogsFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'logs:*'
+                Resource: '*'
+        - PolicyName: SecretManagerReadWritePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:PutSecretValue'
+                  - 'secretsmanager:DeleteSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
+                Resource: '*'
+
+  TestingLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt TestingIAMRole.Arn
+      FunctionName: testingnov_15
+      Runtime: python3.7
+      Timeout: 900
+      MemorySize: 128
+      Environment:
+        Variables:
+          email_1: kavanoor.aditya@wildbrain.com
+
+  MyEventBridgeTarget:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: wb-eventrule-uk-useast-rightsline-events
+      EventBusName: aws.partner/rightsline.com/prd-div191-v4
+      Targets:
+        - Arn: !GetAtt TestingLambdaFunction.Arn
+          Id: TestingLambdaFunctionTarget
